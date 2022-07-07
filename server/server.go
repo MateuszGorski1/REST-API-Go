@@ -69,6 +69,11 @@ func BadRequestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("400 Bad Request"))
 }
 
+func BadUrlHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte("503 Bad Url"))
+}
+
 func PrepareServer() *http.Server {
 	calculationEndpoints := mux.NewRouter()
 	calculationEndpoints.HandleFunc("/{type:[a-z]+}", BadRequestHandler)
@@ -77,6 +82,7 @@ func PrepareServer() *http.Server {
 	calculationEndpoints.HandleFunc("/mul/{a:[0-9]+}/{b:[0-9]+}", MulHandler)
 	calculationEndpoints.HandleFunc("/div/{a:[0-9]+}/{b:[0-9]+}", DivHandler)
 	calculationEndpoints.HandleFunc("/fact/{a:[0-9]+}", FactorialHandler)
+	calculationEndpoints.HandleFunc("/", BadUrlHandler)
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", 8080),
 		Handler: logs.C.Then(calculationEndpoints),

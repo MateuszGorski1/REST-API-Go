@@ -16,6 +16,7 @@ func TestStartServer(t *testing.T) {
 		expectedDivStatus        int
 		expectedFactStatus       int
 		expectedBadRequestStatus int
+		expectedBadUrlStatus     int
 	}{
 
 		"everything up": {
@@ -25,6 +26,7 @@ func TestStartServer(t *testing.T) {
 			expectedDivStatus:        http.StatusOK,
 			expectedFactStatus:       http.StatusOK,
 			expectedBadRequestStatus: http.StatusBadRequest,
+			expectedBadUrlStatus:     http.StatusInternalServerError,
 		},
 	}
 
@@ -43,6 +45,7 @@ func TestStartServer(t *testing.T) {
 			divStatus, _ := client.Get(testServer.URL + "/div/0/0")
 			factStatus, _ := client.Get(testServer.URL + "/fact/1")
 			badRequestStatus, _ := client.Get(testServer.URL + "/sum")
+			badUrlStatus, _ := client.Get(testServer.URL + "/")
 
 			require.Equal(t, tc.expectedSumStatus, sumStatus.StatusCode, "unexpected sum status")
 			require.Equal(t, tc.expectedDiffStatus, diffStatus.StatusCode, "unexpected diff status")
@@ -50,6 +53,7 @@ func TestStartServer(t *testing.T) {
 			require.Equal(t, tc.expectedDivStatus, divStatus.StatusCode, "unexpected div status")
 			require.Equal(t, tc.expectedFactStatus, factStatus.StatusCode, "unexpected fact status")
 			require.Equal(t, tc.expectedBadRequestStatus, badRequestStatus.StatusCode, "unexpected badrequest status")
+			require.Equal(t, tc.expectedBadUrlStatus, badUrlStatus.StatusCode, "unexpected bad url status")
 		})
 	}
 }

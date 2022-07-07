@@ -97,7 +97,7 @@ func StartServer() {
 	}()
 	go func() {
 		defer wg.Done()
-		if err := http.ListenAndServe(":8081", kp); err != nil {
+		if err := http.ListenAndServe(":8081", logs.C.Then(kp)); err != nil {
 			live.MarkAsDown()
 			ready.MarkAsDown()
 		}

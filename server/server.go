@@ -69,20 +69,28 @@ func BadRequestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("400 Bad Request"))
 }
 
-func StartServer() {
-	logs.ServeLogs()
-	wg := new(sync.WaitGroup)
-	wg.Add(2)
+func PrepareServer() *http.Server {
 	calculationEndpoints := mux.NewRouter()
 	calculationEndpoints.HandleFunc("/{type:[a-z]+}", BadRequestHandler)
 	calculationEndpoints.HandleFunc("/sum/{a:[0-9]+}/{b:[0-9]+}", SumHandler)
 	calculationEndpoints.HandleFunc("/diff/{a:[0-9]+}/{b:[0-9]+}", DiffHandler)
 	calculationEndpoints.HandleFunc("/mul/{a:[0-9]+}/{b:[0-9]+}", MulHandler)
 	calculationEndpoints.HandleFunc("/div/{a:[0-9]+}/{b:[0-9]+}", DivHandler)
-	calculationEndpoints.HandleFunc("/factorial/{a:[0-9]+}", FactorialHandler)
+	calculationEndpoints.HandleFunc("/fact/{a:[0-9]+}", FactorialHandler)
+	return &http.Server{
+		Addr:    fmt.Sprintf(":%d", 8080),
+		Handler: logs.C.Then(calculationEndpoints),
+	}
+}
+
+func StartServer() {
+	logs.ServeLogs()
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		if err := http.ListenAndServe(":8080", logs.C.Then(calculationEndpoints)); err != nil {
+		server := PrepareServer()
+		if err := server.ListenAndServe(); err != nil {
 			LiveStatus.MarkAsDown()
 			ReadyStatus.MarkAsDown()
 		}

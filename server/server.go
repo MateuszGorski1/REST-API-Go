@@ -90,20 +90,22 @@ func StartServer() {
 	calculationEndpoints.HandleFunc("/factorial/{a:[0-9]+}", FactorialHandler)
 	go func() {
 		defer wg.Done()
-		http.ListenAndServe(":8080", logs.C.Then(calculationEndpoints))
+		if err := http.ListenAndServe(":8080", logs.C.Then(calculationEndpoints)); err != nil {
+			live.MarkAsDown()
+			ready.MarkAsDown()
+		}
 	}()
 	go func() {
 		defer wg.Done()
-		http.ListenAndServe(":8081", logs.C.Then(kp))
+		if err := http.ListenAndServe(":8081", kp); err != nil {
+			live.MarkAsDown()
+			ready.MarkAsDown()
+		}
 	}()
-	_, err := http.Get("http://localhost:8080/sum/0/0")
-	if err != nil {
-		live.MarkAsDown()
-		ready.MarkAsDown()
-	} else {
-		live.MarkAsUp()
-		ready.MarkAsUp()
-	}
+
+	live.MarkAsUp()
+	ready.MarkAsUp()
+
 	wg.Wait()
 
 }

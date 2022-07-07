@@ -6,16 +6,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Icikowski/kubeprobes"
 	"github.com/gorilla/mux"
 	"gorski.mateusz/webcalc/logs"
-)
-
-var live = kubeprobes.NewStatefulProbe()
-var ready = kubeprobes.NewStatefulProbe()
-var kp = kubeprobes.New(
-	kubeprobes.WithLivenessProbes(live.GetProbeFunction()),
-	kubeprobes.WithReadinessProbes(ready.GetProbeFunction()),
 )
 
 func factorial(num int) int {
@@ -91,20 +83,21 @@ func StartServer() {
 	go func() {
 		defer wg.Done()
 		if err := http.ListenAndServe(":8080", logs.C.Then(calculationEndpoints)); err != nil {
-			live.MarkAsDown()
-			ready.MarkAsDown()
+			LiveStatus.MarkAsDown()
+			ReadyStatus.MarkAsDown()
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		if err := http.ListenAndServe(":8081", logs.C.Then(kp)); err != nil {
-			live.MarkAsDown()
-			ready.MarkAsDown()
+		healthServer := PrepareHealthcheck()
+		if err := healthServer.ListenAndServe(); err != nil {
+			LiveStatus.MarkAsDown()
+			ReadyStatus.MarkAsDown()
 		}
 	}()
 
-	live.MarkAsUp()
-	ready.MarkAsUp()
+	LiveStatus.MarkAsUp()
+	ReadyStatus.MarkAsUp()
 
 	wg.Wait()
 

@@ -13,6 +13,7 @@ var (
 	ReadyStatus = kubeprobes.NewStatefulProbe()
 )
 
+//Returns server that check for app health
 func PrepareHealthcheck() *http.Server {
 	kp := kubeprobes.New(
 		kubeprobes.WithLivenessProbes(LiveStatus.GetProbeFunction()),

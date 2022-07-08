@@ -74,6 +74,7 @@ func badUrlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("503 Bad Url"))
 }
 
+//Returns server listening on port 8080 which handles calculator
 func PrepareServer() *http.Server {
 	calculationEndpoints := mux.NewRouter()
 	calculationEndpoints.HandleFunc("/{type:[a-z]+}", badRequestHandler)
@@ -89,6 +90,7 @@ func PrepareServer() *http.Server {
 	}
 }
 
+//Runs server and its healthcheck in separate go routines
 func StartServer() {
 	logs.ServeLogs()
 	wg := new(sync.WaitGroup)

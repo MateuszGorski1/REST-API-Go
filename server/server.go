@@ -17,7 +17,7 @@ func factorial(num int) int {
 	return num * factorial(num-1)
 }
 
-func SumHandler(w http.ResponseWriter, r *http.Request) {
+func sumHandler(w http.ResponseWriter, r *http.Request) {
 	variables := mux.Vars(r)
 	a, _ := strconv.ParseInt(variables["a"], 10, 64)
 	b, _ := strconv.ParseInt(variables["b"], 10, 64)
@@ -26,7 +26,7 @@ func SumHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(sum))
 }
 
-func DiffHandler(w http.ResponseWriter, r *http.Request) {
+func diffHandler(w http.ResponseWriter, r *http.Request) {
 	variables := mux.Vars(r)
 	a, _ := strconv.ParseInt(variables["a"], 10, 64)
 	b, _ := strconv.ParseInt(variables["b"], 10, 64)
@@ -34,7 +34,7 @@ func DiffHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(diff))
 }
-func MulHandler(w http.ResponseWriter, r *http.Request) {
+func mulHandler(w http.ResponseWriter, r *http.Request) {
 	variables := mux.Vars(r)
 	a, _ := strconv.ParseInt(variables["a"], 10, 64)
 	b, _ := strconv.ParseInt(variables["b"], 10, 64)
@@ -42,7 +42,7 @@ func MulHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(mul))
 }
-func DivHandler(w http.ResponseWriter, r *http.Request) {
+func divHandler(w http.ResponseWriter, r *http.Request) {
 	variables := mux.Vars(r)
 	a, _ := strconv.ParseFloat(variables["a"], 64)
 	b, _ := strconv.ParseFloat(variables["b"], 64)
@@ -51,7 +51,7 @@ func DivHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(div))
 }
 
-func FactorialHandler(w http.ResponseWriter, r *http.Request) {
+func factorialHandler(w http.ResponseWriter, r *http.Request) {
 	variables := mux.Vars(r)
 	var fact int
 	a, _ := strconv.ParseInt(variables["a"], 10, 10)
@@ -64,25 +64,25 @@ func FactorialHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(strconv.Itoa(fact)))
 }
 
-func BadRequestHandler(w http.ResponseWriter, r *http.Request) {
+func badRequestHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusBadRequest)
 	w.Write([]byte("400 Bad Request"))
 }
 
-func BadUrlHandler(w http.ResponseWriter, r *http.Request) {
+func badUrlHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Write([]byte("503 Bad Url"))
 }
 
 func PrepareServer() *http.Server {
 	calculationEndpoints := mux.NewRouter()
-	calculationEndpoints.HandleFunc("/{type:[a-z]+}", BadRequestHandler)
-	calculationEndpoints.HandleFunc("/sum/{a:[0-9]+}/{b:[0-9]+}", SumHandler)
-	calculationEndpoints.HandleFunc("/diff/{a:[0-9]+}/{b:[0-9]+}", DiffHandler)
-	calculationEndpoints.HandleFunc("/mul/{a:[0-9]+}/{b:[0-9]+}", MulHandler)
-	calculationEndpoints.HandleFunc("/div/{a:[0-9]+}/{b:[0-9]+}", DivHandler)
-	calculationEndpoints.HandleFunc("/fact/{a:[0-9]+}", FactorialHandler)
-	calculationEndpoints.HandleFunc("/", BadUrlHandler)
+	calculationEndpoints.HandleFunc("/{type:[a-z]+}", badRequestHandler)
+	calculationEndpoints.HandleFunc("/sum/{a:[0-9]+}/{b:[0-9]+}", sumHandler)
+	calculationEndpoints.HandleFunc("/diff/{a:[0-9]+}/{b:[0-9]+}", diffHandler)
+	calculationEndpoints.HandleFunc("/mul/{a:[0-9]+}/{b:[0-9]+}", mulHandler)
+	calculationEndpoints.HandleFunc("/div/{a:[0-9]+}/{b:[0-9]+}", divHandler)
+	calculationEndpoints.HandleFunc("/fact/{a:[0-9]+}", factorialHandler)
+	calculationEndpoints.HandleFunc("/", badUrlHandler)
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", 8080),
 		Handler: logs.C.Then(calculationEndpoints),

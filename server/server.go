@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	"gorski.mateusz/webcalc/logs"
@@ -52,14 +53,23 @@ func divHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func factorialHandler(w http.ResponseWriter, r *http.Request) {
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	ReadyStatus.MarkAsDown()
 	variables := mux.Vars(r)
 	var fact int
 	a, _ := strconv.ParseInt(variables["a"], 10, 10)
 	if a < 0 {
 		fmt.Print("Factorial of negative number doesn't exist.")
 	} else {
-		fact = factorial(int(a))
+		go func() {
+			defer wg.Done()
+			time.Sleep(5 * time.Second)
+			fact = factorial(int(a))
+		}()
 	}
+	wg.Wait()
+	ReadyStatus.MarkAsUp()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(strconv.Itoa(fact)))
 }
@@ -72,6 +82,19 @@ func badRequestHandler(w http.ResponseWriter, r *http.Request) {
 func badUrlHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Write([]byte("503 Bad Url"))
+}
+
+func constantlyCheckForServer() {
+	for range time.Tick(time.Second * 5) {
+		_, err := http.Get("http://localhost:8080/sum/0/0")
+		if err != nil {
+			LiveStatus.MarkAsDown()
+			ReadyStatus.MarkAsDown()
+		} else {
+			LiveStatus.MarkAsUp()
+			ReadyStatus.MarkAsUp()
+		}
+	}
 }
 
 //Returns server listening on port 8080 which handles calculator
@@ -114,7 +137,7 @@ func StartServer() {
 
 	LiveStatus.MarkAsUp()
 	ReadyStatus.MarkAsUp()
+	constantlyCheckForServer()
 
 	wg.Wait()
-
 }

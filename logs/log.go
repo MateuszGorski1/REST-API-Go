@@ -13,6 +13,7 @@ import (
 
 var C alice.Chain
 
+//Enables user to see application logs
 func ServeLogs() {
 	log := zerolog.New(os.Stdout).With().
 		Logger()

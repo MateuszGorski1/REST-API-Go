@@ -9,7 +9,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o webcalc -ldflags 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /app/webcalc .
-USER 65532:65532
-EXPOSE 8080:8080
-EXPOSE 8081:8081
+EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["/webcalc"]

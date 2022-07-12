@@ -1,59 +1,134 @@
 package servers
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestStartServer(t *testing.T) {
-	tests := map[string]struct {
-		expectedSumStatus        int
-		expectedDiffStatus       int
-		expectedMulStatus        int
-		expectedDivStatus        int
-		expectedFactStatus       int
-		expectedBadRequestStatus int
-		expectedBadUrlStatus     int
+	testsArithmetic := map[string]struct {
+		operation        string
+		number1, number2 float64
+		expectedResult   float64
+		expectedStatus   int
 	}{
 
-		"everything up": {
-			expectedSumStatus:        http.StatusOK,
-			expectedDiffStatus:       http.StatusOK,
-			expectedMulStatus:        http.StatusOK,
-			expectedDivStatus:        http.StatusOK,
-			expectedFactStatus:       http.StatusOK,
-			expectedBadRequestStatus: http.StatusBadRequest,
-			expectedBadUrlStatus:     http.StatusInternalServerError,
+		"test sum": {
+			operation:      "sum",
+			number1:        3,
+			number2:        4,
+			expectedResult: 7,
+			expectedStatus: http.StatusOK,
+		},
+		"test diff": {
+			operation:      "diff",
+			number1:        5,
+			number2:        4,
+			expectedResult: 1,
+			expectedStatus: http.StatusOK,
+		},
+		"test mul": {
+			operation:      "mul",
+			number1:        7,
+			number2:        4,
+			expectedResult: 28,
+			expectedStatus: http.StatusOK,
+		},
+		"test div": {
+			operation:      "div",
+			number1:        6,
+			number2:        4,
+			expectedResult: 1.5,
+			expectedStatus: http.StatusOK,
+		},
+		"test fact": {
+			operation:      "fact",
+			number1:        3,
+			expectedResult: 6,
+			expectedStatus: http.StatusOK,
+		},
+		"test edge sum": {
+			operation:      "sum",
+			number1:        5.5,
+			number2:        3.7,
+			expectedResult: 9.2,
+			expectedStatus: http.StatusOK,
+		},
+		"test edge diff": {
+			operation:      "diff",
+			number1:        6.6,
+			number2:        4.1,
+			expectedResult: 2.5,
+			expectedStatus: http.StatusOK,
+		},
+		"test edge mul": {
+			operation:      "mul",
+			number1:        2.5,
+			number2:        2.5,
+			expectedResult: 6.25,
+			expectedStatus: http.StatusOK,
+		},
+		"test edge fact": {
+			operation:      "fact",
+			number1:        2.5,
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		"test edge div": {
+			operation:      "div",
+			number1:        7.5,
+			number2:        3,
+			expectedResult: 2.5,
+			expectedStatus: http.StatusOK,
+		},
+		"test div by 0": {
+			operation:      "div",
+			number1:        7.7,
+			number2:        0,
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
 		},
 	}
-
 	handler := PrepareServer().Handler
 	testServer := httptest.NewServer(handler)
 	defer testServer.Close()
 
 	client := testServer.Client()
 
-	for name, tc := range tests {
+	for name, tc := range testsArithmetic {
+
 		t.Run(name, func(t *testing.T) {
+			var status *http.Response
+			if tc.operation == "fact" {
+				var a string
+				value := (int)(tc.number1)
+				if (float64)(value) == tc.number1 {
+					a = fmt.Sprintf("%d", value)
+				} else {
+					a = fmt.Sprintf("%f", tc.number1)
+				}
+				status, _ = client.Get(testServer.URL + "/" + tc.operation + "/" + a)
 
-			sumStatus, _ := client.Get(testServer.URL + "/sum/0/0")
-			diffStatus, _ := client.Get(testServer.URL + "/diff/0/0")
-			mulStatus, _ := client.Get(testServer.URL + "/mul/0/0")
-			divStatus, _ := client.Get(testServer.URL + "/div/0/0")
-			factStatus, _ := client.Get(testServer.URL + "/fact/1")
-			badRequestStatus, _ := client.Get(testServer.URL + "/sum")
-			badUrlStatus, _ := client.Get(testServer.URL + "/")
+			} else {
+				a := fmt.Sprintf("%f", tc.number1)
+				b := fmt.Sprintf("%f", tc.number2)
+				status, _ = client.Get(testServer.URL + "/" + tc.operation + "/" + a + "/" + b)
+			}
 
-			require.Equal(t, tc.expectedSumStatus, sumStatus.StatusCode, "unexpected sum status")
-			require.Equal(t, tc.expectedDiffStatus, diffStatus.StatusCode, "unexpected diff status")
-			require.Equal(t, tc.expectedMulStatus, mulStatus.StatusCode, "unexpected mul status")
-			require.Equal(t, tc.expectedDivStatus, divStatus.StatusCode, "unexpected div status")
-			require.Equal(t, tc.expectedFactStatus, factStatus.StatusCode, "unexpected fact status")
-			require.Equal(t, tc.expectedBadRequestStatus, badRequestStatus.StatusCode, "unexpected badrequest status")
-			require.Equal(t, tc.expectedBadUrlStatus, badUrlStatus.StatusCode, "unexpected bad url status")
+			bodyBytes, _ := ioutil.ReadAll(status.Body)
+			bodyString := string(bodyBytes)
+			result, _ := strconv.ParseFloat(bodyString, 64)
+			require.Equal(t, tc.expectedStatus, status.StatusCode, "unexpected status")
+			require.Equal(t, tc.expectedResult, result, "unexpected result")
+
 		})
+
 	}
+
 }

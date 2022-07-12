@@ -17,6 +17,8 @@ func TestStartServer(t *testing.T) {
 		number1, number2 float64
 		expectedResult   float64
 		expectedStatus   int
+		arg1             string
+		arg2             string
 	}{
 
 		"test sum": {
@@ -94,6 +96,54 @@ func TestStartServer(t *testing.T) {
 			expectedResult: 0,
 			expectedStatus: http.StatusBadRequest,
 		},
+		"test wrong args sum": {
+			operation:      "sum",
+			arg1:           "asd",
+			arg2:           "xyz",
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		"test wrong args diff": {
+			operation:      "diff",
+			arg1:           "asd",
+			arg2:           "xyz",
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		"test wrong args mul": {
+			operation:      "mul",
+			arg1:           "asd",
+			arg2:           "xyz",
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		"test wrong args div": {
+			operation:      "div",
+			arg1:           "asd",
+			arg2:           "xyz",
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		"test wrong args fact": {
+			operation:      "fact",
+			arg1:           "asd",
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		"test wrong arg1 ": {
+			operation:      "sum",
+			arg1:           "asd",
+			number2:        6,
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		"test wrong arg2": {
+			operation:      "sum",
+			number1:        8,
+			arg2:           "xyz",
+			expectedResult: 0,
+			expectedStatus: http.StatusBadRequest,
+		},
 	}
 	handler := PrepareServer().Handler
 	testServer := httptest.NewServer(handler)
@@ -113,11 +163,20 @@ func TestStartServer(t *testing.T) {
 				} else {
 					a = fmt.Sprintf("%f", tc.number1)
 				}
+				if tc.arg1 != "" {
+					a = tc.arg1
+				}
 				status, _ = client.Get(testServer.URL + "/" + tc.operation + "/" + a)
 
 			} else {
-				a := fmt.Sprintf("%f", tc.number1)
-				b := fmt.Sprintf("%f", tc.number2)
+				var a = fmt.Sprintf("%f", tc.number1)
+				var b = fmt.Sprintf("%f", tc.number2)
+				if tc.arg1 != "" {
+					a = tc.arg1
+				}
+				if tc.arg2 != "" {
+					b = tc.arg1
+				}
 				status, _ = client.Get(testServer.URL + "/" + tc.operation + "/" + a + "/" + b)
 			}
 
